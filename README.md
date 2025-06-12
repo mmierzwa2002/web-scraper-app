@@ -30,10 +30,11 @@ cd web-scraper-app
 ### 2. Configure .env
  - Create a file named .env in the root directory of the project
  - Add the following variables:
+```
  MONGODB_URL= your MongoDB Atlas connection string
  FLASK_SECRET_KEY="generate a strong random string here"
  MAX_WORKERS= number of CPUs used in scraping
-
+```
 ### 3. Build and Run with Docker Compose
 1. Make sure Docker is running and you have Docker Compose installed
 2. Navigate to the project directory in a terminal
