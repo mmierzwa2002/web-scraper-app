@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Panel Główny Scrapera</h1>
+        <p class="lead">Wyodrębnij e-maile, kody pocztowe + miasta, numery telefonów i odnośniki ze stron internetowych</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Szybkie działania</h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('scrape') }}" class="btn btn-primary mb-2">Rozpocznij nowe scrapowanie</a><br>
+                <a href="{{ url_for('results') }}" class="btn btn-secondary">Zobacz wszystkie wyniki</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Ostatnie zadania</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_jobs %}
+                    <div class="list-group">
+                        {% for job in recent_jobs %}
+                            <a href="{{ url_for('job_status', job_id=job.job_id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <span>
+                                    <code>{{ job.job_id }}</code>
+                                </span>
+                                
+                                <span class="text-nowrap">
+                                    <span class="badge 
+                                        {% if job.status == 'completed' %}bg-success
+                                        {% elif job.status == 'running' %}bg-warning
+                                        {% elif job.status == 'pending' %}bg-info
+                                        {% else %}bg-danger{% endif %} me-2">
+                                        {{ job.status|upper }}
+                                    </span>
+                                    <small class="text-muted">{{ job.created_at | to_localtime }}</small>
+                                </span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Brak ostatnich zadań</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

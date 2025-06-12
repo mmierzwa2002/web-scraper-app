@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2>Rozpocznij nowe zadanie</h2>
+        
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST">
+            <div class="mb-3">
+                <label for="urls" class="form-label">Adresy URL</label>
+                <textarea class="form-control" id="urls" name="urls" rows="10" 
+                          placeholder="Wpisz adresy URL, po jednym w linii:&#10;https://example1.com&#10;https://example2.com"></textarea>
+                <div class="form-text">Wpisz jeden adres URL w każdej linii. Aplikacja wyodrębni adresy e-mail, kody pocztowe + miasta (np. 82-300 Elbląg), numery telefonów oraz odnośniki z każdej strony.</div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Rozpocznij</button>
+        </form>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Profil danych</h5>
+            </div>
+            <div class="card-body">
+                <p>Ten scraper wyodrębnia:</p>
+                <ul>
+                    <li><strong>Adresy e-mail</strong> – dane kontaktowe</li>
+                    <li><strong>Kody pocztowe + miasta</strong> – dane lokalizacyjne</li>
+                    <li><strong>Numery telefonów</strong> – szczegóły kontaktu</li>
+                    <li><strong>Odnośniki</strong> – linki na stronie</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

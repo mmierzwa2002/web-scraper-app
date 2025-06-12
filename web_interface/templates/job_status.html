@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Status Zadania</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Panel</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Status Zadania</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Szczegóły Zadania</h5>
+            </div>
+            <div class="card-body">
+                {% if job %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>ID Zadania:</strong></div>
+                        <div class="col-sm-9"><code>{{ job.job_id }}</code></div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Status:</strong></div>
+                        <div class="col-sm-9">
+                            <span class="badge 
+                                {% if job.status == 'completed' %}bg-success
+                                {% elif job.status == 'running' %}bg-warning
+                                {% elif job.status == 'pending' %}bg-info
+                                {% else %}bg-danger{% endif %}">
+                                {{ job.status|upper }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Docelowe URL:</strong></div>
+                        <div class="col-sm-9">
+                            {% for url in job.urls %}
+                                <a href="{{ url }}" target="_blank">{{ url }}</a><br>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Utworzono:</strong></div>
+                        <div class="col-sm-9">{{ job.created_at | to_localtime }}</div>
+                    </div>
+
+                    {% if job.completed_at %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Zakończono:</strong></div>
+                        <div class="col-sm-9">{{ job.completed_at | to_localtime }}</div>
+                    </div>
+                    {% endif %}
+
+                {% else %}
+                    <div class="alert alert-warning">
+                        <strong>Zadanie nie znalezione!</strong> Nie udało się odnaleźć żądanego zadania.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Akcje</h5>
+            </div>
+            <div class="card-body">
+                {% if job %}
+                    {% if job.status == 'completed' %}
+                        <a href="{{ url_for('download_results', job_id=job.job_id) }}" class="btn btn-success w-100 mb-2">
+                            <i class="fas fa-download"></i> Pobierz wyniki
+                        </a>
+                        <a href="{{ url_for('view_results', job_id=job.job_id) }}" class="btn btn-info w-100 mb-2">
+                            <i class="fas fa-eye"></i> Zobacz wyniki
+                        </a>
+                    {% elif job.status == 'running' or job.status == 'pending' %}
+                        <button class="btn btn-warning w-100 mb-2" disabled>
+                            <i class="fas fa-spinner fa-spin"></i> Zadanie w trakcie...
+                        </button>
+                        <button onclick="refreshPage()" class="btn btn-secondary w-100 mb-2">
+                            <i class="fas fa-sync-alt"></i> Odśwież status
+                        </button>
+                    {% else %}
+                        <div class="alert alert-danger">
+                            Zadanie nie powiodło się.
+                        </div>
+                        <a href="{{ url_for('scrape') }}" class="btn btn-primary w-100 mt-2">
+                            <i class="fas fa-plus"></i> Rozpocznij nowe zadanie
+                        </a>
+                    {% endif %}
+                {% endif %}
+
+                <a href="{{ url_for('index') }}" class="btn btn-secondary w-100 mt-2">
+                    <i class="fas fa-arrow-left"></i> Powrót do panelu
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Podsumowanie Wyników</h5>
+            </div>
+            <div class="card-body">
+                {% if summary %}
+                    <ul class="list-group list-group-flush">
+                        {% for item in summary %}
+                            <li class="list-group-item">
+                                <p class="mb-1"><strong><a href="{{ item.url }}" target="_blank">{{ item.url }}</a></strong></p>
+                                <small class="text-muted">
+                                    E-maile: <span class="badge rounded-pill bg-primary">{{ item.counts.emails }}</span> |
+                                    Telefony: <span class="badge rounded-pill bg-success">{{ item.counts.phone_numbers }}</span> |
+                                    Adresy: <span class="badge rounded-pill bg-warning text-dark">{{ item.counts.addresses }}</span> |
+                                    Linki: <span class="badge rounded-pill bg-secondary">{{ item.counts.links }}</span>
+                                </small>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Brak wyników do podsumowania lub zadanie nie zostało ukończone.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+let autoRefreshEnabled = true;
+let autoRefreshInterval;
+
+function refreshPage() {
+    window.location.reload();
+}
+
+function toggleAutoRefresh() {
+    const button = document.getElementById('toggleAutoRefresh');
+    const text = document.getElementById('autoRefreshText');
+
+    if (autoRefreshEnabled) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshEnabled = false;
+        text.textContent = 'Włącz auto odświeżanie';
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-outline-primary');
+    } else {
+        startAutoRefresh();
+        autoRefreshEnabled = true;
+        text.textContent = 'Wyłącz auto odświeżanie';
+        button.classList.remove('btn-outline-primary');
+        button.classList.add('btn-outline-secondary');
+    }
+}
+
+function startAutoRefresh() {
+    autoRefreshInterval = setInterval(function() {
+        if (autoRefreshEnabled) {
+            refreshPage();
+        }
+    }, 5000);
+}
+
+{% if job and job.status in ['running', 'pending'] %}
+document.addEventListener('DOMContentLoaded', startAutoRefresh);
+{% endif %}
+</script>
+
+{% endblock %}

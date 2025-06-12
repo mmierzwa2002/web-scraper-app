@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-3">Wyniki dla ID zadania: {{ job.job_id }}</h2>
+  <p>Status: <span class="badge bg-info">{{ job.status }}</span></p>
+  <p>Data zgłoszenia: {{ job.created_at | to_localtime }}</p>
+  {% if job.completed_at %}
+    <p>Data zakończenia: {{ job.completed_at | to_localtime }}</p>
+  {% endif %}
+  <p>Łączna liczba wyników: {{ results | length }}</p>
+
+  <a href="{{ url_for('download_results', job_id=job.job_id) }}" class="btn btn-success mb-3">
+    Pobierz JSON
+  </a>
+
+  {% if results %}
+  <table class="table table-striped table-hover">
+    <thead class="table-dark">
+      <tr>
+        <th>URL</th>
+        <th>Adresy e-mail</th>
+        <th>Numery telefonów</th>
+        <th>Adresy</th>
+        <th>Linki</th>
+        <th>Data skanowania</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in results %}
+      <tr>
+        <td><a href="{{ result.url }}" target="_blank">{{ result.url }}</a></td>
+        <td>{{ result.emails | join(', ') }}</td>
+        <td>{{ result.phone_numbers | join(', ') }}</td>
+        <td>{{ result.addresses | join(', ') }}</td>
+        <td>
+          {% for link in result.links %}
+            <a href="{{ link }}" 
+               target="_blank" 
+               class="truncate-link" 
+               title="{{ link }}">
+               {{ link }}
+            </a><br>
+          {% endfor %}
+        </td>
+        <td>{{ result.created_at | to_localtime }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p>Brak wyników dla tego zadania.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Wyniki scrapowania</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Panel główny</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Wyniki</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Wyniki filtrowania</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('results') }}">
+                    <div class="row align-items-end">
+                        <div class="col-md-3">
+                            <label for="status_filter" class="form-label">Status</label>
+                            <select name="status" id="status_filter" class="form-select">
+                                <option value="all" {% if filters.status == 'all' %}selected{% endif %}>Wszystkie statusy</option>
+                                <option value="completed" {% if filters.status == 'completed' %}selected{% endif %}>Ukończone</option>
+                                <option value="running" {% if filters.status == 'running' %}selected{% endif %}>W trakcie</option>
+                                <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Oczekujące</option>
+                                <option value="error" {% if filters.status == 'error' %}selected{% endif %}>Błąd</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="url_search" class="form-label">Wyszukaj URL</label>
+                            <input type="text" name="url" id="url_search" class="form-control" 
+                                   placeholder="Część adresu URL..." 
+                                   value="{{ filters.url or '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_from" class="form-label">Data od</label>
+                            <input type="date" name="date_from" id="date_from" class="form-control" 
+                                   value="{{ filters.date_from or '' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Filtruj</button>
+                            <a href="{{ url_for('results') }}" class="btn btn-secondary w-100 mt-1">Wyczyść</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Wszystkie zadania</h5>
+                <span class="badge bg-secondary">Znaleziono: {{ total_count }}</span>
+            </div>
+            <div class="card-body p-0">
+                {% if jobs %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID Zadania / URL</th>
+                                    <th>Status</th>
+                                    <th>Data utworzenia</th>
+                                    <th>Wyników</th>
+                                    <th>Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for job in jobs %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('job_status', job_id=job.job_id) }}" class="text-decoration-none fw-bold">
+                                            <code>{{ job.job_id }}</code>
+                                        </a>
+                                        <div class="text-muted small">
+                                            {{ job.urls[0][:70] }}{% if job.urls[0]|length > 70 %}...{% endif %}
+                                            {% if job.urls|length > 1 %}
+                                                <span class="badge bg-light text-dark">+{{ job.urls|length - 1 }} więcej</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if job.status == 'completed' %}bg-success
+                                            {% elif job.status == 'running' %}bg-warning
+                                            {% elif job.status == 'pending' %}bg-info
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ job.status|upper }}
+                                        </span>
+                                    </td>
+                                    <td><small>{{ job.created_at | to_localtime }}</small></td>
+                                    <td><span class="badge bg-info">{{ job.results_count }}</span></td>
+                                    <td>
+                                        <a href="{{ url_for('job_status', job_id=job.job_id) }}" 
+                                           class="btn btn-outline-primary btn-sm" title="Zobacz szczegóły">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h4>Brak wyników</h4>
+                        <p class="text-muted">Żadne zadania nie spełniają określonych filtrów.</p>
+                        <a href="{{ url_for('scrape') }}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus"></i> Zacznij pierwsze zadanie
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            {% if total_count > per_page %}
+            <div class="card-footer">
+                <nav aria-label="Nawigacja po wynikach">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% set total_pages = (total_count / per_page)|round(0, 'ceil')|int %}
+
+                        <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('results', page=page-1, **filters) }}">Poprzednia</a>
+                        </li>
+
+                        {% for page_num in range(1, total_pages + 1) %}
+                            <li class="page-item {% if page_num == page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('results', page=page_num, **filters) }}">{{ page_num }}</a>
+                            </li>
+                        {% endfor %}
+
+                        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('results', page=page+1, **filters) }}">Następna</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

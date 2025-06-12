@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  web_interface:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: web_scraper_interface
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    networks:
+      - scraper_network
+    volumes:
+      - .:/app
+    depends_on:
+      - processing_engine
+
+  processing_engine:
+    build:
+      context: .
+      dockerfile: Dockerfile.engine
+    container_name: web_scraper_engine
+    env_file:
+      - .env
+    networks:
+      - scraper_network
+    volumes:
+      - .:/app
+
+networks:
+  scraper_network:
+    driver: bridge
