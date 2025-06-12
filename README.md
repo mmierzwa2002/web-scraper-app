@@ -44,7 +44,7 @@ cd web-scraper-app
 You can run a one-time script to create database indexes for optimal performance, and to check whether MongoDB connection is working in general:
  - Open a new terminal window
  - Type docker ps
- - Next, run docker exec -it <container-name> python
+ - Next, run docker exec -it container-name python
  - setup_atlas.py
 
 ### 5. Access the Application
